@@ -151,7 +151,7 @@ void PFMoveToApplicationsFolderIfNecessary(void) {
 				if (IsApplicationAtPathRunning(destinationPath)) {
 					// Give the running app focus and terminate myself
 					NSLog(@"INFO -- Switching to an already running version");
-					[[NSTask launchedTaskWithLaunchPath:@"/usr/bin/open" arguments:[NSArray arrayWithObject:destinationPath]] waitUntilExit];
+					[[NSTask launchedTaskWithLaunchPath:@"/usr/bin/open" arguments:@[destinationPath]] waitUntilExit];
 					exit(0);
 				}
 				else {
@@ -181,7 +181,7 @@ void PFMoveToApplicationsFolderIfNecessary(void) {
 		// otherwise leave it mounted).
 		if (diskImageDevice != nil) {
 			NSString *script = [NSString stringWithFormat:@"(/bin/sleep 5 && /usr/bin/hdiutil detach %@) &", ShellQuotedString(diskImageDevice)];
-			[NSTask launchedTaskWithLaunchPath:@"/bin/sh" arguments:[NSArray arrayWithObjects:@"-c", script, nil]];
+			[NSTask launchedTaskWithLaunchPath:@"/bin/sh" arguments:@[@"-c", script]];
 		}
 
 		exit(0);
@@ -215,7 +215,7 @@ static NSString *PreferredInstallLocation(BOOL *isUserDirectory) {
 	NSArray *userApplicationsDirs = NSSearchPathForDirectoriesInDomains(NSApplicationDirectory, NSUserDomainMask, YES);
 
 	if ([userApplicationsDirs count] > 0) {
-		NSString *userApplicationsDir = [userApplicationsDirs objectAtIndex:0];
+		NSString *userApplicationsDir = userApplicationsDirs[0];
 		BOOL isDirectory;
 
 		if ([fm fileExistsAtPath:userApplicationsDir isDirectory:&isDirectory] && isDirectory) {
@@ -277,7 +277,7 @@ static BOOL IsApplicationAtPathRunning(NSString *path) {
 #endif
 	// Use the shell to determine if the app is already running on systems 10.5 or lower
 	NSString *script = [NSString stringWithFormat:@"/bin/ps ax -o comm | /usr/bin/grep %@/ | /usr/bin/grep -v grep >/dev/null", ShellQuotedString(path)];
-	NSTask *task = [NSTask launchedTaskWithLaunchPath:@"/bin/sh" arguments:[NSArray arrayWithObjects:@"-c", script, nil]];
+	NSTask *task = [NSTask launchedTaskWithLaunchPath:@"/bin/sh" arguments:@[@"-c", script]];
 	[task waitUntilExit];
 
 	// If the task terminated with status 0, it means that the final grep produced 1 or more lines of output.
@@ -296,7 +296,7 @@ static NSString *ContainingDiskImageDevice(void) {
 
 	NSTask *hdiutil = [[NSTask alloc] init];
 	[hdiutil setLaunchPath:@"/usr/bin/hdiutil"];
-	[hdiutil setArguments:[NSArray arrayWithObjects:@"info", @"-plist", nil]];
+	[hdiutil setArguments:@[@"info", @"-plist"]];
 	[hdiutil setStandardOutput:[NSPipe pipe]];
 	[hdiutil launch];
 	[hdiutil waitUntilExit];
@@ -317,7 +317,7 @@ static NSString *ContainingDiskImageDevice(void) {
 	if (![info isKindOfClass:[NSDictionary class]])
 		return nil;
 
-	id images = [info objectForKey:@"images"];
+	id images = info[@"images"];
 	if (![images isKindOfClass:[NSArray class]])
 		return nil;
 
@@ -325,12 +325,12 @@ static NSString *ContainingDiskImageDevice(void) {
 		if (![image isKindOfClass:[NSDictionary class]])
 			return nil;
 
-		id systemEntities = [image objectForKey:@"system-entities"];
+		id systemEntities = image[@"system-entities"];
 		if (![systemEntities isKindOfClass:[NSArray class]])
 			return nil;
 
 		for (id systemEntity in systemEntities) {
-			id devEntry = [systemEntity objectForKey:@"dev-entry"];
+			id devEntry = systemEntity[@"dev-entry"];
 			if (![devEntry isKindOfClass:[NSString class]])
 				return nil;
 			if ([devEntry isEqualToString:device])
@@ -345,7 +345,7 @@ static BOOL Trash(NSString *path) {
 	if ([[NSWorkspace sharedWorkspace] performFileOperation:NSWorkspaceRecycleOperation
 													 source:[path stringByDeletingLastPathComponent]
 												destination:@""
-													  files:[NSArray arrayWithObject:[path lastPathComponent]]
+													  files:@[[path lastPathComponent]]
 														tag:NULL]) {
 		return YES;
 	}
@@ -481,5 +481,5 @@ static void Relaunch(NSString *destinationPath) {
 
 	NSString *script = [NSString stringWithFormat:@"(while /bin/kill -0 %d >&/dev/null; do /bin/sleep 0.1; done; %@; /usr/bin/open %@) &", pid, preOpenCmd, quotedDestinationPath];
 
-	[NSTask launchedTaskWithLaunchPath:@"/bin/sh" arguments:[NSArray arrayWithObjects:@"-c", script, nil]];
+	[NSTask launchedTaskWithLaunchPath:@"/bin/sh" arguments:@[@"-c", script]];
 }
