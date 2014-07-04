@@ -312,6 +312,7 @@
 				GCC_PREFIX_HEADER = LetsMove_Prefix.pch;
 				INFOPLIST_FILE = "LetsMove-Info.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.potionfactory.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = LetsMove;
 			};
@@ -329,6 +330,7 @@
 				GCC_PREFIX_HEADER = LetsMove_Prefix.pch;
 				INFOPLIST_FILE = "LetsMove-Info.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.potionfactory.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = LetsMove;
 			};
