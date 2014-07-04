@@ -263,26 +263,14 @@ static BOOL IsInDownloadsFolder(NSString *path) {
 }
 
 static BOOL IsApplicationAtPathRunning(NSString *path) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5
 	// Use the new API on 10.6 or higher to determine if the app is already running
-	if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_5) {
-		for (NSRunningApplication *runningApplication in [[NSWorkspace sharedWorkspace] runningApplications]) {
-			NSString *executablePath = [[runningApplication executableURL] path];
-			if ([executablePath hasPrefix:path]) {
-				return YES;
-			}
-		}
-		return NO;
-	}
-#endif
-	// Use the shell to determine if the app is already running on systems 10.5 or lower
-	NSString *script = [NSString stringWithFormat:@"/bin/ps ax -o comm | /usr/bin/grep %@/ | /usr/bin/grep -v grep >/dev/null", ShellQuotedString(path)];
-	NSTask *task = [NSTask launchedTaskWithLaunchPath:@"/bin/sh" arguments:@[@"-c", script]];
-	[task waitUntilExit];
-
-	// If the task terminated with status 0, it means that the final grep produced 1 or more lines of output.
-	// Which means that the app is already running
-	return [task terminationStatus] == 0;
+    for (NSRunningApplication *runningApplication in [[NSWorkspace sharedWorkspace] runningApplications]) {
+        NSString *executablePath = [[runningApplication executableURL] path];
+        if ([executablePath hasPrefix:path]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 static NSString *ContainingDiskImageDevice(void) {
@@ -302,17 +290,7 @@ static NSString *ContainingDiskImageDevice(void) {
 	[hdiutil waitUntilExit];
 
 	NSData *data = [[[hdiutil standardOutput] fileHandleForReading] readDataToEndOfFile];
-	id info;
-#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5
-	if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_5) {
-		info = [NSPropertyListSerialization propertyListWithData:data options:NSPropertyListImmutable format:NULL error:NULL];
-	}
-	else {
-#endif
-		info = [NSPropertyListSerialization propertyListFromData:data mutabilityOption:NSPropertyListImmutable format:NULL errorDescription:NULL];
-#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5
-	}
-#endif
+	id info = [NSPropertyListSerialization propertyListWithData:data options:NSPropertyListImmutable format:NULL error:NULL];
 
 	if (![info isKindOfClass:[NSDictionary class]])
 		return nil;
